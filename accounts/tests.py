@@ -35,7 +35,7 @@ class UserProfileModelTestCase(TestCase):
         """
         user = UserFactory(username='johnsmith', name='John Smith')
 
-        self.assertEqual('johnsmith', user.__unicode__())
+        self.assertEqual('johnsmith', unicode(user))
         self.assertEqual('John Smith', user.name)
         self.assertEqual('John Smith', user.get_short_name())
         self.assertEqual(False, user.is_vip)
@@ -44,12 +44,16 @@ class UserProfileModelTestCase(TestCase):
         user.calculate_reputation()
         user.save()
         self.assertEqual(False, user.is_superuser)
+
+        user_statistics = dict(user.statistics_dict)
+        user_statistics.pop('user_id', None)
         self.assertEqual({
-            'user_id': 1,
             'total_cash': formatted(0),
             'portfolio_value': formatted(0),
             'reputation': '100%',
-        }, user.statistics_dict)
+            },
+            user_statistics
+        )
         self.assertEqual(0, user.current_portfolio_value)
 
     def test_get_user_avatar_path(self):
@@ -131,12 +135,14 @@ class UserProfileModelTestCase(TestCase):
         """
         user = UserFactory()
         user.reset_account()
+
+        user_statistics = dict(user.statistics_dict)
+        user_statistics.pop('user_id', None)
         self.assertEqual({
-            'user_id': 1,
             'total_cash': formatted(1000),
             'portfolio_value': formatted(0),
             'reputation': "100%",
-        }, user.statistics_dict)
+        }, user_statistics)
 
     def test_reset_account_with_bonus(self):
         """
@@ -144,12 +150,14 @@ class UserProfileModelTestCase(TestCase):
         """
         user = UserFactory()
         user.reset_account(0.1)
+
+        user_statistics = dict(user.statistics_dict)
+        user_statistics.pop('user_id', None)
         self.assertEqual({
-            'user_id': 1,
             'total_cash': formatted(1100),
             'portfolio_value': formatted(0),
             'reputation': "110%",
-        }, user.statistics_dict)
+        }, user_statistics)
 
     def test_get_newest_results(self):
         """
@@ -216,12 +224,14 @@ class UserProfileManagerTestCase(TestCase):
         self.assertEqual('j_smith', user.username)
         self.assertTrue(user.check_password('password9'))
         self.assertTrue(user.is_active)
+
+        user_statistics = dict(user.statistics_dict)
+        user_statistics.pop('user_id', None)
         self.assertEqual({
-            'user_id': 1,
             'total_cash': formatted(config.STARTING_CASH),
             'portfolio_value': formatted(0),
             'reputation': '100%',
-        }, user.statistics_dict)
+        }, user_statistics)
 
         user2 = UserProfile.objects.create_user(
             username='j_smith',
@@ -244,12 +254,14 @@ class UserProfileManagerTestCase(TestCase):
         self.assertTrue(user.is_staff)
         self.assertTrue(user.is_admin)
         self.assertTrue(user.is_active)
+
+        user_statistics = dict(user.statistics_dict)
+        user_statistics.pop('user_id', None)
         self.assertEqual({
-            'user_id': 1,
             'total_cash': formatted(0),
             'portfolio_value': formatted(0),
             'reputation': '100%',
-        }, user.statistics_dict)
+        }, user_statistics)
 
         user2 = UserProfile.objects.create_superuser(
             username='j_smith',
